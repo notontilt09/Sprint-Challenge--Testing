@@ -13,6 +13,27 @@ describe('server.js', () => {
         afterEach(async () => {
             await db('games').truncate();
         })
+
+        it('should return 405 status when trying to add duplicate game', async () => {
+            const game1 = {
+                title: 'Fortnite',
+                genre: 'Shooter',
+                releaseYear: 2017
+            }
+
+            const game2 = {
+                title: 'Fortnite',
+                genre: 'Shooter',
+                releaseYear: 2017
+            }
+
+            await Games.insert(game1);
+            const response = await request(server)
+                .post('/games')
+                .send(game2)
+
+            expect(response.status).toBe(405);
+        });
         
         it('should return 422 when body is incomplete', async () => {
             const newGame = {
@@ -92,6 +113,46 @@ describe('server.js', () => {
         it('should return empty array if no game in the db', async () => {
             const response = await request(server).get('/games')
             expect(response.body).toEqual([]);
+        });
+    });
+
+    describe('GET /games/:id', () => {
+        afterEach(async () => {
+            await db('games').truncate();
+        })
+
+        it('should return correct game if passed an id of an existing game', async () => {
+            const newGame1 = {
+                title: 'game1',
+                genre: 'shooter',
+                releaseYear: 2017
+            }
+
+            const newGame2 = {
+                title: 'game2',
+                genre: 'adventure',
+                releaseYear: 2000
+            }
+
+            // add games to the db first
+            await Games.insert([newGame1, newGame2]);
+
+            const response1 = await request(server).get('/games/1')
+            const response2 = await request(server).get('/games/2')
+            // expect the response bodies to be the correct games added above
+            // also expect reponse status to be 200
+            expect(response1.status).toBe(200);
+            expect(response2.status).toBe(200);
+            expect(response1.body).toEqual({...newGame1, id: 1});
+            expect(response2.body).toEqual({...newGame2, id: 2});    
+        });
+
+        it('should return 404 if id of game is not found', async () => {
+            // try to get the game with id of 1 even though db is empty
+            const response = await request(server).get('/games/1')
+            // expect 404 status because game isn't found
+            expect(response.status).toBe(404);
+            
         });
     });
 });
