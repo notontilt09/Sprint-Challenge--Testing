@@ -13,19 +13,19 @@ describe('server.js', () => {
         afterEach(async () => {
             await db('games').truncate();
         })
-
+        
         it('should return 422 when body is incomplete', async () => {
             const newGame = {
                 name: 'testGame',
                 madeIn: '2000'
             }
             const response = await request(server)
-                .post('/games')
-                .send(newGame);
-
+            .post('/games')
+            .send(newGame);
+            
             expect(response.status).toBe(422);
         });
-
+        
         it('should return 201 when successful', async () => {
             const newGame = {
                 title: 'Fortnite',
@@ -34,8 +34,8 @@ describe('server.js', () => {
             }
             
             const response = await request(server)
-                .post('/games')
-                .send(newGame)
+            .post('/games')
+            .send(newGame)
             
             expect(response.status).toBe(201);
         });
@@ -47,28 +47,51 @@ describe('server.js', () => {
                 genre: 'Shooter',
                 releaseYear: 2017
             }
-
+            
             const response = await request(server)
-                .post('/games')
-                .send(newGame)
+            .post('/games')
+            .send(newGame)
             
             expect(response.body).toEqual({...newGame, id: 1});
             
         });
         
     });
-
+    
     describe('GET / ', () => {
-        it('should return 200 status code when successful', () => {
-            
+        afterEach(async () => {
+            await db('games').truncate();
+        })
+
+        it('should return 200 status code when successful', async () => {
+            const response = await request(server).get('/games')
+            expect(response.status).toBe(200);
         });
 
-        it('should return array of all games in the db', () => {
-            
+        it('should return array of all games in the db', async  () => {
+            const newGame1 = {
+                title: 'game1',
+                genre: 'shooter',
+                releaseYear: 2017
+            }
+
+            const newGame2 = {
+                title: 'game2',
+                genre: 'adventure',
+                releaseYear: 2000
+            }
+
+            // add games to the db first
+            await Games.insert([newGame1, newGame2]);
+            // get all the games using getAll()
+            const allGames = await Games.getAll();
+            // expect 2 games to be in the db
+            expect(allGames.length).toBe(2);
         });
 
-        it('should return empty array if no game in the db', () => {
-            
+        it('should return empty array if no game in the db', async () => {
+            const response = await request(server).get('/games')
+            expect(response.body).toEqual([]);
         });
     });
 });
