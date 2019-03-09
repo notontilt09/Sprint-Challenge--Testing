@@ -27,7 +27,10 @@ describe('server.js', () => {
                 releaseYear: 2017
             }
 
+            // add first game
             await Games.insert(game1);
+
+            // try adding second game with POST endpoint
             const response = await request(server)
                 .post('/games')
                 .send(game2)
